@@ -1,4 +1,4 @@
-const NAME='cnmi-handover-v1.0.1';
+const NAME='cnmi-handover-v1.0.2';
 const ASSETS=['./','index.html','assets/styles.css','assets/icon.svg','src/app.js','src/api.js','src/barcode.js','src/ocr.js','src/helpers.js'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(NAME).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(x=>x!==NAME).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));

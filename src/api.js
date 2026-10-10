@@ -89,7 +89,7 @@ export async function adminUser({op,email,password,full_name,user_id}){
   if(m.includes('(404)'))throw Error('ไม่พบ Edge Function admin-user (404) — ต้อง Deploy ฟังก์ชันใน Supabase Project ที่แอปเชื่อมอยู่ก่อน');
   if(m.includes('(401)'))throw Error('ยืนยันตัวตนไม่สำเร็จ (401) — กรุณาออกจากระบบแล้ว Login ใหม่ และตรวจสอบการตั้งค่า Edge Function');
   if(m.includes('(403)'))throw Error('ไม่มีสิทธิ์หรือโดเมนยังไม่อนุญาต (403) — ตรวจสอบบัญชี Admin และ Secret ALLOWED_ORIGINS ใน Supabase');
-  if(m.includes('Failed to fetch')||m.includes('NetworkError')||m.includes('Load failed'))throw Error('ติดต่อ Edge Function ไม่ได้ — ตรวจสอบว่า Deploy แล้ว และเพิ่ม URL เว็บไซต์ใน ALLOWED_ORIGINS (ไม่ต้องใส่ / ท้ายโดเมน)');
+  if(m.includes('Failed to fetch')||m.includes('NetworkError')||m.includes('Load failed'))throw Error(`เชื่อมต่อ Edge Function ไม่ได้ (CORS/Network) — ตั้ง ALLOWED_ORIGINS ให้รวม ${window.location.origin} ที่ Supabase → Edge Functions → Secrets แล้วตรวจว่า admin-user ตอบ OPTIONS ได้`);
   throw e;
  }
 }
