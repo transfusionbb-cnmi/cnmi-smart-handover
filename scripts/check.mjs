@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {encode128,CODE128_PATTERNS_COUNT} from '../src/barcode.js';
+import {parseDob} from '../src/helpers.js';
+import {extractLISFields} from '../src/ocr.js';
+assert.equal(CODE128_PATTERNS_COUNT,107);
+assert.ok(encode128('959691000272').startsWith('11010011100'));
+assert.ok(encode128('959691000272').endsWith('1100011101011'));
+assert.equal(parseDob('12/12/2517'),'1974-12-12');
+assert.equal(parseDob('31/02/2569'),null);
+const r=extractLISFields('HN/SID: C2238404\nLN: 959691000272\nDate of Birth: 12/12/2517\nMale   Female');
+assert.equal(r.hn,'C2238404');
+assert.equal(r.ln,'959691000272');
+assert.equal(r.date_of_birth,'12/12/2517');
+assert.equal(r.sex,'');
+console.log('PASS: Code128 standard symbol count + checksum structure');
+console.log('PASS: Thai Buddhist DOB conversion + invalid DOB rejected');
+console.log('PASS: Screenshot OCR field parser (HN/LN/DOB)');
+console.log('PASS: OCR does not guess radio button gender from screen text');

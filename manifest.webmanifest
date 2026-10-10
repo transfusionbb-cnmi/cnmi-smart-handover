@@ -1,0 +1,1 @@
+{"name":"CNMI Smart Handover","short_name":"Smart Handover","description":"ระบบส่งเวร CNMI Blood Bank","start_url":"./#/dashboard","scope":"./","display":"standalone","background_color":"#e9f6ff","theme_color":"#e9f6ff","icons":[{"src":"assets/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
