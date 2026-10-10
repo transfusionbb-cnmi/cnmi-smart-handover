@@ -17,7 +17,7 @@ function statusTag(t){if(t.status==='done')return '<span class="tag good">เส
 function patientName(p){return p?[p.first_name,p.last_name].filter(Boolean).join(' ')||`HN ${p.hn}`:'งานทั่วไป (ไม่มี HN)'}
 function barcodeContainer(ln,idx){try{return `<div class="barcode-block"><div class="row-between"><strong>LN: ${esc(ln)}</strong><button class="btn outline small" data-copy="${esc(ln)}">คัดลอก LN</button></div><div class="barcode-image">${barcodeSvg(ln)}</div><div class="barcode-val">${esc(ln)}</div><p class="hint">Code 128 (SVG) — ทดสอบความเข้ากันได้กับเครื่องยิง LIS ก่อนใช้งานจริง</p></div>`}catch{return `<div class="note warning">LN: ${esc(ln)} — ไม่สามารถสร้าง Code 128 จากค่านี้ได้ กรุณาตรวจสอบ</div>`}}
 function miniTask(t){const p=t.patients;return `<a class="task-card" href="${href('/handover/'+t.id)}"><div class="row-between"><div class="title">${esc(t.title)}</div>${statusTag(t)}</div><div class="detail">${esc(t.details||'ไม่มีรายละเอียด').slice(0,165)}${String(t.details||'').length>165?'…':''}</div><div class="row wrap meta"><span>${esc(categoryLabels[t.category]||'อื่น ๆ')}</span><span>·</span><span>${esc(patientName(p))}</span><span>·</span><span>กำหนด ${thDate(t.due_at)}</span>${t.work_mode==='ongoing'?'<span class="tag info">งานต่อเนื่อง</span>':''}</div></a>`}
-function shell(content){const p=api.currentUser();const path=route();const display=p?.full_name||p?.email||'บัญชีผู้ใช้';app.innerHTML=`<div class="app-shell"><aside class="sidebar"><a href="#/dashboard" class="logo-line"><img class="logo" src="assets/icon.svg" alt="CNMI"/><span class="brand"><strong>CNMI Smart<br/>Handover</strong><small>Blood Bank • V1.0.0</small></span></a><nav class="nav">${nav.map(([url,t,i])=>`<a href="${href(url)}" class="${path.startsWith(url)?'active':''}"><span style="font-size:1.3rem;min-width:22px;text-align:center">${ICON[i]}</span>${t}</a>`).join('')}</nav><div class="sidebar-foot"><div class="muted tiny">ผู้ใช้งาน</div><strong style="font-size:.9rem">${esc(display)}</strong><p class="hint">${api.demo?'โหมดทดลอง (ไม่บันทึกถาวร)':'เชื่อม Supabase'}</p><button class="btn outline small" data-logout>ออกจากระบบ</button></div></aside><main class="content"><div class="topline"><div class="crumb">CNMI Blood Bank / Smart Handover ${api.demo?'· โหมดทดลอง':''}</div><div class="userpill"><span>●</span><strong>${esc(display)}</strong><button class="btn outline small" data-logout title="ออกจากระบบ">ออก</button></div></div><div id="page-content">${content}</div></main><nav class="mobile-nav">${nav.map(([url,t,i])=>`<a href="${href(url)}" class="${path.startsWith(url)?'active':''}"><span>${ICON[i]}</span>${t}</a>`).join('')}</nav></div>`;
+function shell(content){const p=api.currentUser();const path=route();const display=p?.full_name||p?.email||'บัญชีผู้ใช้';app.innerHTML=`<div class="app-shell"><aside class="sidebar"><a href="#/dashboard" class="logo-line"><img class="logo" src="assets/icon.svg" alt="CNMI"/><span class="brand"><strong>CNMI Smart<br/>Handover</strong><small>Blood Bank • V1.0.1</small></span></a><nav class="nav">${nav.map(([url,t,i])=>`<a href="${href(url)}" class="${path.startsWith(url)?'active':''}"><span style="font-size:1.3rem;min-width:22px;text-align:center">${ICON[i]}</span>${t}</a>`).join('')}</nav><div class="sidebar-foot"><div class="muted tiny">ผู้ใช้งาน</div><strong style="font-size:.9rem">${esc(display)}</strong><p class="hint">${api.demo?'โหมดทดลอง (ไม่บันทึกถาวร)':'เชื่อม Supabase'}</p><button class="btn outline small" data-logout>ออกจากระบบ</button></div></aside><main class="content"><div class="topline"><div class="crumb">CNMI Blood Bank / Smart Handover ${api.demo?'· โหมดทดลอง':''}</div><div class="userpill"><span>●</span><strong>${esc(display)}</strong><button class="btn outline small" data-logout title="ออกจากระบบ">ออก</button></div></div><div id="page-content">${content}</div></main><nav class="mobile-nav">${nav.map(([url,t,i])=>`<a href="${href(url)}" class="${path.startsWith(url)?'active':''}"><span>${ICON[i]}</span>${t}</a>`).join('')}</nav></div>`;
  $$('[data-logout]').forEach(b=>b.onclick=()=>{api.signOut();location.hash='#/login';render()});
  $$('[data-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.copy);toast('คัดลอก LN แล้ว')}catch{toast('คัดลอกไม่สำเร็จ กรุณาเลือกเลขด้วยตนเอง',true)}});
 }
@@ -75,11 +75,88 @@ async function historyPage(){shell(`${header('ค้นหาประวัต�
  $('#search-btn').onclick=async()=>{const q=$('#search-text').value.trim(),d=$('#search-dob').value.trim();if(!q&& !d){toast('กรุณากรอกคำค้นหรือวันเกิด',true);return}const dob=d?parseDob(d):null;if(d&&!dob){toast('รูปแบบวันเกิดไม่ถูกต้อง',true);return}$('#history-items').innerHTML='<div class="empty"><span class="spinner"></span>กำลังค้นหา…</div>';try{const a=await api.searchTasks(q,dob);$('#history-items').innerHTML=a.length?a.map(miniTask).join(''):'<div class="empty">ไม่พบประวัติตามเงื่อนไข</div>'}catch(err){$('#history-items').innerHTML=`<div class="note danger">${esc(err.message)}</div>`}};
  $('#search-text').onkeydown=e=>{if(e.key==='Enter')$('#search-btn').click()};
 }
-async function adminPage(){const me=api.currentUser();if(me.role!=='admin'){shell('<div class="card"><h2>เฉพาะผู้ดูแลระบบ</h2><p>คุณไม่มีสิทธิ์เข้าถึงหน้านี้</p></div>');return}
+function openResetPasswordDialog(account) {
+ // Never use native prompt(): some browsers block it, and it gives no validation feedback.
+ document.getElementById('admin-reset-dialog')?.remove();
+ const layer=document.createElement('div');
+ layer.id='admin-reset-dialog';
+ layer.className='modal-backdrop';
+ layer.innerHTML=`<div class="modal-card reset-card" role="dialog" aria-modal="true" aria-labelledby="reset-dialog-title">
+  <div class="row-between"><h2 id="reset-dialog-title" style="margin:0">รีเซ็ตรหัสผ่านเจ้าหน้าที่</h2><button type="button" class="btn outline small" id="reset-close" aria-label="ปิดหน้าต่าง">✕</button></div>
+  <p class="hint" style="margin:10px 0 20px">บัญชี: <strong>${esc(account.email)}</strong><br>หลังรีเซ็ต เจ้าหน้าที่ต้องตั้งรหัสผ่านใหม่เมื่อเข้าระบบครั้งต่อไป</p>
+  <form id="reset-password-form">
+    ${input('รหัสผ่านชั่วคราวใหม่ (อย่างน้อย 8 ตัว)','reset-pass',{type:'password',placeholder:'กรอกรหัสชั่วคราว',required:true})}
+    ${input('ยืนยันรหัสผ่านชั่วคราว','reset-confirm',{type:'password',placeholder:'กรอกรหัสให้ตรงกัน',required:true})}
+    <label class="row" style="font-weight:400;font-size:.86rem;margin-bottom:15px;cursor:pointer"><input id="reset-show" type="checkbox"> แสดงรหัสที่กำลังกรอก</label>
+    <p class="error" id="reset-error" role="alert" aria-live="polite"></p>
+    <div class="row wrap reset-actions"><button type="button" class="btn outline" id="reset-cancel">ยกเลิก</button><button type="submit" class="btn primary" id="reset-submit">ยืนยันรีเซ็ตรหัส</button></div>
+  </form>
+ </div>`;
+ document.body.appendChild(layer);
+ let busy=false;
+ const close=()=>{if(!busy){document.removeEventListener('keydown',escKey);layer.remove()}};
+ const escKey=e=>{if(e.key==='Escape')close()};
+ document.addEventListener('keydown',escKey);
+ layer.querySelector('#reset-close').onclick=close;
+ layer.querySelector('#reset-cancel').onclick=close;
+ layer.addEventListener('click',e=>{if(e.target===layer)close()});
+ layer.querySelector('#reset-show').onchange=e=>{const type=e.target.checked?'text':'password';layer.querySelector('#reset-pass').type=type;layer.querySelector('#reset-confirm').type=type};
+ layer.querySelector('#reset-password-form').onsubmit=async e=>{
+  e.preventDefault(); if(busy)return;
+  const pass=layer.querySelector('#reset-pass').value;
+  const again=layer.querySelector('#reset-confirm').value;
+  const error=layer.querySelector('#reset-error');error.textContent='';
+  if(pass.length<8){error.textContent='รหัสชั่วคราวต้องมีอย่างน้อย 8 ตัวอักษร';return}
+  if(pass!==again){error.textContent='รหัสทั้งสองช่องไม่ตรงกัน';return}
+  busy=true;const submit=layer.querySelector('#reset-submit');submit.disabled=true;submit.textContent='กำลังรีเซ็ต…';
+  try{
+   await api.adminUser({op:'reset',user_id:account.id,password:pass});
+   toast('รีเซ็ตรหัสเรียบร้อย เจ้าหน้าที่ต้องเปลี่ยนรหัสครั้งถัดไป');
+   busy=false;close();await adminPage();
+  }catch(err){error.textContent=err?.message||'รีเซ็ตรหัสไม่สำเร็จ';busy=false;submit.disabled=false;submit.textContent='ยืนยันรีเซ็ตรหัส'}
+ };
+ layer.querySelector('#reset-pass').focus();
+}
+async function adminPage(){
+ const me=api.currentUser();
+ if(me.role!=='admin'){shell('<div class="card"><h2>เฉพาะผู้ดูแลระบบ</h2><p>คุณไม่มีสิทธิ์เข้าถึงหน้านี้</p></div>');return}
  const users=await api.getProfiles();let audits=[];try{audits=await api.getAudits()}catch{}
- shell(`${header('จัดการระบบ','Admin • จัดการเจ้าหน้าที่และตรวจสอบประวัติการดำเนินงาน')}<div class="grid"><div class="card g6"><h2>สร้างบัญชีเจ้าหน้าที่</h2><p class="hint">ตั้งรหัสชั่วคราวขั้นต่ำ 8 ตัว เจ้าหน้าที่ต้องเปลี่ยนรหัสในครั้งแรก</p>${input('Username (ไม่ต้องใส่ @mahidol.ac.th)','admin-username',{placeholder:'username.sur'})}${input('ชื่อที่แสดง','admin-name',{placeholder:'ชื่อ–สกุลเจ้าหน้าที่'})}${input('รหัสผ่านชั่วคราว','admin-password',{type:'password',placeholder:'อย่างน้อย 8 ตัว'})}<p class="error" id="admin-error"></p><button id="add-user" class="btn primary">สร้างบัญชีเจ้าหน้าที่</button></div><div class="card g6"><h2>นโยบายความปลอดภัย</h2><div class="stack"><div class="note">คอมไม่ใช้งาน 15 นาที • iPad ประจำหน่วย 5 นาที • มือถือแยกเซสชัน</div><div class="note">ประวัติส่งเวรและ Audit ไม่สามารถลบผ่านหน้าผู้ใช้ทั่วไป</div><div class="note warning">ระบบใช้งานจริงต้องมีแผน Backup ฐานข้อมูลและ Storage แยกกันเพื่อเก็บย้อนหลัง 5 ปี</div></div></div><div class="card g12"><h2>เจ้าหน้าที่ในระบบ</h2><div class="table-scroll"><table><thead><tr><th>ผู้ใช้</th><th>Username</th><th>สิทธิ์</th><th>ตั้งรหัสเริ่มต้น</th><th>จัดการ</th></tr></thead><tbody>${users.map(u=>`<tr><td>${esc(u.full_name||'—')}</td><td>${esc(u.email)}</td><td>${esc(u.role)}</td><td>${u.must_change_password?'ต้องเปลี่ยน':'เรียบร้อย'}</td><td><button class="btn outline small" data-reset="${esc(u.id)}">รีเซ็ตรหัส</button></td></tr>`).join('')}</tbody></table></div></div><div class="card g12"><h2>Audit Log ล่าสุด</h2><div class="table-scroll"><table><thead><tr><th>เวลา</th><th>ตาราง</th><th>การดำเนินการ</th><th>ผู้ดำเนินการ</th></tr></thead><tbody>${audits.length?audits.map(a=>`<tr><td>${thTime(a.created_at)}</td><td>${esc(a.table_name)}</td><td>${esc(a.action)}</td><td>${esc(a.actor_id)}</td></tr>`).join(''):'<tr><td colspan="4" class="muted">ยังไม่มีรายการในโหมดทดลอง</td></tr>'}</tbody></table></div></div></div>`);
- $('#add-user').onclick=async()=>{try{const u=$('#admin-username').value.trim().replace(/@mahidol\.ac\.th$/i,'');const pw=$('#admin-password').value;if(!/^[a-zA-Z0-9._-]+$/.test(u)||pw.length<8)throw Error('Username ต้องใช้อักษรอังกฤษ/จุด และรหัสอย่างน้อย 8 ตัว');await api.adminUser({op:'create',email:u.toLowerCase()+'@mahidol.ac.th',password:pw,full_name:$('#admin-name').value.trim()});toast('สร้างบัญชีแล้ว');adminPage()}catch(err){$('#admin-error').textContent=err.message}};
- $$('[data-reset]').forEach(b=>b.onclick=async()=>{const pw=prompt('ตั้งรหัสชั่วคราวใหม่ (อย่างน้อย 8 ตัว)');if(pw===null)return;try{if(pw.length<8)throw Error('รหัสอย่างน้อย 8 ตัว');await api.adminUser({op:'reset',user_id:b.dataset.reset,password:pw});toast('รีเซ็ตรหัสและบังคับเปลี่ยนครั้งแรกแล้ว');adminPage()}catch(err){toast(err.message,true)}});
+ shell(`${header('จัดการระบบ','Admin • จัดการเจ้าหน้าที่และตรวจสอบประวัติการดำเนินงาน')}<div class="grid">
+ <div class="card g6"><h2>สร้างบัญชีเจ้าหน้าที่</h2><p class="hint">ตั้งรหัสชั่วคราวขั้นต่ำ 8 ตัว เจ้าหน้าที่ต้องเปลี่ยนรหัสในครั้งแรก</p>
+ ${input('Username (ไม่ต้องใส่ @mahidol.ac.th)','admin-username',{placeholder:'username.sur'})}
+ ${input('ชื่อที่แสดง','admin-name',{placeholder:'ชื่อ–สกุลเจ้าหน้าที่'})}
+ ${input('รหัสผ่านชั่วคราว','admin-password',{type:'password',placeholder:'อย่างน้อย 8 ตัว'})}
+ <p class="error" id="admin-error" role="alert"></p><button id="add-user" class="btn primary">สร้างบัญชีเจ้าหน้าที่</button></div>
+ <div class="card g6"><h2>ตรวจสอบระบบจัดการรหัสผ่าน</h2>
+ <p class="hint">การสร้างบัญชีและรีเซ็ตรหัสต้องติดตั้ง Supabase Edge Function <code>admin-user</code> แยกจาก GitHub Pages</p>
+ <button id="admin-health" class="btn outline" type="button">ตรวจสอบการเชื่อมต่อ Admin</button>
+ <div id="admin-health-status" class="hint" role="status" aria-live="polite" style="margin-top:13px">ยังไม่ได้ตรวจสอบ</div>
+ <div class="note" style="margin-top:14px">คอมไม่ใช้งาน 15 นาที · iPad ประจำหน่วย 5 นาที</div>
+ <p class="hint">ประวัติ Audit และไฟล์ Backup ต้องเก็บตามนโยบายโรงพยาบาล</p></div>
+ <div class="card g12"><h2>เจ้าหน้าที่ในระบบ</h2><div class="table-scroll"><table><thead><tr><th>ผู้ใช้</th><th>Username</th><th>สิทธิ์</th><th>ตั้งรหัสเริ่มต้น</th><th>จัดการ</th></tr></thead>
+ <tbody>${users.map(u=>`<tr><td>${esc(u.full_name||'—')}</td><td>${esc(u.email)}</td><td>${esc(u.role)}</td><td>${u.must_change_password?'ต้องเปลี่ยน':'เรียบร้อย'}</td><td><button class="btn outline small" data-reset="${esc(u.id)}">รีเซ็ตรหัส</button></td></tr>`).join('')}</tbody></table></div></div>
+ <div class="card g12"><h2>Audit Log ล่าสุด</h2><div class="table-scroll"><table><thead><tr><th>เวลา</th><th>ตาราง</th><th>การดำเนินการ</th><th>ผู้ดำเนินการ</th></tr></thead>
+ <tbody>${audits.length?audits.map(a=>`<tr><td>${thTime(a.created_at)}</td><td>${esc(a.table_name)}</td><td>${esc(a.action)}</td><td>${esc(a.actor_id)}</td></tr>`).join(''):`<tr><td colspan="4" class="muted">${api.demo?'โหมดทดลอง: ยังไม่มี Audit Log จริง':'ยังไม่มีรายการ Audit Log'}</td></tr>`}</tbody></table></div></div></div>`);
+ $('#add-user').onclick=async()=>{
+  const button=$('#add-user');try{
+   $('#admin-error').textContent='';
+   const u=$('#admin-username').value.trim().replace(/@mahidol\.ac\.th$/i,'');const pw=$('#admin-password').value;
+   if(!/^[a-zA-Z0-9._-]+$/.test(u)||pw.length<8)throw Error('Username ต้องใช้อักษรอังกฤษ/จุด และรหัสอย่างน้อย 8 ตัว');
+   button.disabled=true;button.textContent='กำลังสร้างบัญชี…';
+   await api.adminUser({op:'create',email:u.toLowerCase()+'@mahidol.ac.th',password:pw,full_name:$('#admin-name').value.trim()});
+   toast('สร้างบัญชีแล้ว');await adminPage();
+  }catch(err){$('#admin-error').textContent=err.message;button.disabled=false;button.textContent='สร้างบัญชีเจ้าหน้าที่'}
+ };
+ $('#admin-health').onclick=async()=>{
+  const b=$('#admin-health'),out=$('#admin-health-status');b.disabled=true;out.textContent='กำลังตรวจสอบ Supabase Edge Function…';
+  try{const r=await api.adminUser({op:'health'});out.innerHTML=r?.ok?`<span class="success-text">✓ ${esc(r?.message||'ระบบ Admin พร้อมใช้งาน')}</span>`:`<span class="danger-text">${esc(r?.message||'ยังไม่พร้อมใช้งานจริง')}</span>`}
+  catch(err){out.textContent=err.message;out.className='error'}
+  finally{b.disabled=false}
+ };
+ $$('[data-reset]').forEach(b=>b.onclick=()=>{
+  const account=users.find(u=>u.id===b.dataset.reset);
+  if(account)openResetPasswordDialog(account);
+ });
 }
 let renderBusy=false;
 async function render(){if(renderBusy)return;renderBusy=true;try{

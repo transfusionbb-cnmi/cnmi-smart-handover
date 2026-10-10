@@ -77,10 +77,22 @@ export async function addAction(id,{action='note',note='',next_due_at=null,qty_d
 export async function setStep(id,stepId,done){if(demo){const t=demoTasks.find(x=>x.id===id),s=t?.handover_steps.find(x=>x.id===stepId);if(!s)throw Error('ไม่พบขั้นตอน');s.is_done=done;s.done_at=done?new Date().toISOString():null;return deepCopy(t)}await request('/rest/v1/rpc/set_handover_step',{method:'POST',body:{p_step_id:stepId,p_done:done}});return getTask(id)}
 export async function addStep(id,label){if(demo){const t=demoTasks.find(x=>x.id===id);t.handover_steps.push({id:uid(),label,is_done:false});return deepCopy(t)}await request('/rest/v1/rpc/add_handover_step',{method:'POST',body:{p_task_id:id,p_label:label}});return getTask(id)}
 export async function adminUser({op,email,password,full_name,user_id}){
- if(demo){if(op==='create'){const p={id:uid(),email,full_name,role:'staff',must_change_password:true,is_active:true};demoPeople.push(p);return p}return {ok:true}}
- const res=await request('/functions/v1/admin-user',{method:'POST',body:{op,email,password,full_name,user_id}});return res;
+ if(demo){
+  if(op==='health')return {ok:false,message:'โหมดทดลอง — ยังไม่สามารถรีเซ็ตรหัสจริงได้ ต้องเชื่อม Supabase'};
+  if(op==='create'){const p={id:uid(),email,full_name,role:'staff',must_change_password:true,is_active:true};demoPeople.push(p);return p}
+  return {ok:true};
+ }
+ try{
+  return await request('/functions/v1/admin-user',{method:'POST',body:{op,email,password,full_name,user_id}});
+ }catch(e){
+  const m=String(e?.message||'');
+  if(m.includes('(404)'))throw Error('ไม่พบ Edge Function admin-user (404) — ต้อง Deploy ฟังก์ชันใน Supabase Project ที่แอปเชื่อมอยู่ก่อน');
+  if(m.includes('(401)'))throw Error('ยืนยันตัวตนไม่สำเร็จ (401) — กรุณาออกจากระบบแล้ว Login ใหม่ และตรวจสอบการตั้งค่า Edge Function');
+  if(m.includes('(403)'))throw Error('ไม่มีสิทธิ์หรือโดเมนยังไม่อนุญาต (403) — ตรวจสอบบัญชี Admin และ Secret ALLOWED_ORIGINS ใน Supabase');
+  if(m.includes('Failed to fetch')||m.includes('NetworkError')||m.includes('Load failed'))throw Error('ติดต่อ Edge Function ไม่ได้ — ตรวจสอบว่า Deploy แล้ว และเพิ่ม URL เว็บไซต์ใน ALLOWED_ORIGINS (ไม่ต้องใส่ / ท้ายโดเมน)');
+  throw e;
+ }
 }
-// Server-side search is required because historical data may exceed dashboard's 500 rows.
 export async function searchTasks(q,dob){
  if(demo){const search=String(q||'').toLowerCase();return deepCopy(demoTasks.filter(t=>{
  const p=t.patients;const searchable=[p?.hn,p?.first_name,p?.last_name,t.title,t.details,...(t.handover_task_specimens||[]).map(x=>x.specimens?.ln)].join(' ').toLowerCase();return(!search||searchable.includes(search))&&(!dob||p?.date_of_birth===dob)
