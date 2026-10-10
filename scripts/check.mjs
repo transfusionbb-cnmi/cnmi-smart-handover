@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {encode128,CODE128_PATTERNS_COUNT} from '../src/barcode.js';
 import {parseDob} from '../src/helpers.js';
 import {extractLISFields} from '../src/ocr.js';
+import {deviceVoiceGuide,appendVoiceText} from '../src/voice.js';
 assert.equal(CODE128_PATTERNS_COUNT,107);
 assert.ok(encode128('959691000272').startsWith('11010011100'));
 assert.ok(encode128('959691000272').endsWith('1100011101011'));
@@ -16,3 +17,9 @@ console.log('PASS: Code128 standard symbol count + checksum structure');
 console.log('PASS: Thai Buddhist DOB conversion + invalid DOB rejected');
 console.log('PASS: Screenshot OCR field parser (HN/LN/DOB)');
 console.log('PASS: OCR does not guess radio button gender from screen text');
+
+assert.equal(deviceVoiceGuide('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)').kind,'ios');
+assert.equal(deviceVoiceGuide('Mozilla/5.0 (Windows NT 10.0; Win64; x64)').kind,'windows');
+assert.equal(deviceVoiceGuide('Mozilla/5.0 (Linux; Android 12)').kind,'android');
+assert.equal(appendVoiceText('โทรจอง LDPPC', 'พรุ่งนี้ไปรับเลือด'),'โทรจอง LDPPC พรุ่งนี้ไปรับเลือด');
+console.log('PASS: Native dictation device guides + transcript append');

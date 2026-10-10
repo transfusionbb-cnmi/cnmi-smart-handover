@@ -9,3 +9,9 @@
 .reset-card .reset-actions{justify-content:flex-end;margin-top:8px}
 .reset-card input[type="checkbox"]{width:18px;height:18px;accent-color:#2f91c8}
 @media(max-width:530px){.reset-card{padding:19px}.reset-card .reset-actions .btn{flex:1}}
+
+/* V1.0.3 — small, accessible dictation helper; no extra navigation or popup blocking */
+.voice-guide{margin-top:10px;padding:12px 14px;border-radius:12px;border:1px solid #cde3f0;background:#f0f9ff;color:#295977;font-size:.85rem;line-height:1.6}
+.voice-guide strong{display:block;margin-bottom:4px}.voice-guide p{margin:5px 0}.voice-guide .hint{font-size:.76rem}
+.voice-status{color:#236e91;font-weight:650}.voice-guide .voice-install{margin-top:8px}
+.btn.recording{background:#fff0ef;border-color:#cf7671;color:#963e3a}
